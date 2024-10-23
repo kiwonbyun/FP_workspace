@@ -59,3 +59,30 @@ _.map(arr, function (v, i) {
   return L("v,i=>i*2")(v, i);
 });
 console.timeEnd("5");
+
+function flatten(arr) {
+  return (function f(arr, new_arr) {
+    arr.forEach((v) => (Array.isArray(v) ? f(v, new_arr) : new_arr.push(v)));
+    return new_arr;
+  })(arr, []);
+}
+
+console.log(flatten([1, [2], [3, 4, [5, [6, 7]]]]));
+
+function flatten2(arr, new_arr) {
+  arr.forEach((v) =>
+    Array.isArray(v) ? flatten2(v, new_arr) : new_arr.push(v)
+  );
+  return new_arr;
+}
+
+console.log(flatten2([1, [2], [3, 4, [5, [6, 7]]]], []));
+
+function flatten3(arr, new_arr) {
+  if (!new_arr) return flatten3(arr, []);
+  arr.forEach((v) =>
+    Array.isArray(v) ? flatten2(v, new_arr) : new_arr.push(v)
+  );
+  return new_arr;
+}
+console.log(flatten3([1, [2], [3, 4, [5, [6, 7]]]]));
