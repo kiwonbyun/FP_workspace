@@ -16,13 +16,13 @@ var div = function (a, b, callback) {
   }, 1000);
 };
 
-add(10, 15, function (a) {
-  sub(a, 5, function (a) {
-    div(a, 10, function (r) {
-      console.log(r);
-    });
-  });
-});
+// add(10, 15, function (a) {
+//   sub(a, 5, function (a) {
+//     div(a, 10, function (r) {
+//       console.log(r);
+//     });
+//   });
+// });
 
 function wrap(func) {
   return function () {
@@ -36,8 +36,14 @@ var add = wrap(function (a, b, callback) {
   }, 100);
 });
 
-add(5, 10, function (a) {
-  console.log(a);
-});
+// add(5, 10, function (a) {
+//   console.log(a);
+// });
 
 // console.log(div(sub(add(10, 15), 5), 10));
+
+function log(arg) {
+  console.log(arg);
+}
+
+((a, b) => ((f) => f(f))((f) => log(a) || a++ == b || f(f)))(1, 5);
