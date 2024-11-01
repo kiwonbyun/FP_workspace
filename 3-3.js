@@ -20,16 +20,23 @@ _.keys = function (data) {
   return _.isObject(data) ? Object.keys(data) : [];
 };
 
-function bloop(new_data, body) {
+function bloop(new_data, body, stopper) {
   return function (data, iter_predi) {
+    iter_predi = iter_predi || _.identity;
     var result = new_data(data);
+    var memo;
     if (isArrayLike(data)) {
       for (var i = 0; i < data.length; i++) {
-        body(iter_predi(data[i], i, data), result, data[i]);
+        memo = iter_predi(data[i], i, data);
+        if (!stopper) body(memo, result, data[i], i);
+        else if (stopper(memo)) return body(memo, result, data[i], i);
       }
     } else {
       for (var i = 0, keys = _.keys(data); i < keys.length; i++) {
-        body(iter_predi(data[keys[i]], keys[i], data), result, data[keys[i]]);
+        memo = iter_predi(data[keys[i]], keys[i], data);
+        if (!stopper) body(memo, result, data[keys[i]], keys[i]);
+        else if (stopper(memo))
+          return body(memo, result, data[keys[i]], keys[i]);
       }
     }
     return result;
@@ -58,6 +65,13 @@ _.values = function (list) {
 _.args0 = _.identity;
 _.args1 = function (a, b) {
   return b;
+};
+_.args2 = function (a, b, c) {
+  return c;
+};
+_.lastArg = function () {
+  const lastIndex = arguments.length - 1;
+  return arguments[lastIndex];
 };
 _.isFunction = (obj) => toString.call(obj) === "[object Function]";
 
@@ -90,6 +104,13 @@ _.if = function (validator, func, alter) {
   };
 };
 
+_.push = function (obj, val) {
+  obj.push(val);
+  return obj;
+};
+
+_.filter = bloop(_.array, _.if(_.identity, _.rester(_.push)));
+
 _.toArray2 = _.if(Array.isArray, _.idtt, _.values);
 
 function sub(a, b) {
@@ -115,29 +136,26 @@ _.isNumber = (a) => toString.call(a) === "[object Number]";
 
 var square = _.safety(_.isNumber, (a) => a * a, _.constant(0));
 
-log(square("2"));
+_.reject = bloop(_.array, _.if(_.identity, _.noop, _.rester(_.push)));
+_.negate = function (func) {
+  return function () {
+    return !func.apply(null, arguments);
+  };
+};
 
-// log(_.toArray2({ a: 10, b: 300 }));
+_.not = (v) => !v;
+_.reject = bloop(_.array, _.if(_.not, _.rester(_.push)));
 
-// log(diff(1, 15));
-// log(sub2(10, 15));
+_.find = bloop(_.noop, _.rester(_.identity, 2), _.identity);
+_.findIndex = bloop(_.constant(-1), _.lastArg, _.identity);
+_.findKey = bloop(_.noop, _.lastArg, _.identity);
+_.some = bloop(_.constant(false), _.constant(true), _.identity);
+_.every = bloop(_.constant(true), _.constant(false), _.not);
 
-// function sum(a, b, c, d) {
-//   return (a || 0) + (b || 0) + (c || 0) + (d || 0);
-// }
+// log(_.reject([1, 2, 3], (v) => v > 2));
+log(_.findIndex([1, 2, 3, 4, 5, 6, 7, 78, 3929, 2332], (a) => a === 78));
+log(_.findKey({ name: "kiwon", age: 30 }, (v) => v === 30));
+log(_.findKey({ name: "kiwon", age: 30 }, (v) => v === 31));
 
-// log(_.keys(undefined));
-// log(Object.keys(undefined));
-// log(_.keys(() => {}));
-// log(Object.keys(function () {}));
-// log(_.rest({ 0: 1, 1: 10, 2: 100, 3: 1000 }, 2));
-
-// _.filter = function (list, predicate) {
-//   var newList = [];
-//   _.each(list, (val, idx, data) => {
-//     if (predicate(val, idx, data)) newList.push(val);
-//   });
-//   return newList;
-// };
-// log(_.filter({ a: 1, b: 2, c: 3, d: 4 }, (val) => val > 2));
-// log(_.reverse({}));
+log(_.some([undefined, null, 2]));
+log(_.every([1, 2, 0, 2]));
